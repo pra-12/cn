@@ -1,49 +1,43 @@
-// Server side C/C++ program to demonstrate Socket 
-// programming  int argc, char const* argv[]
-#include <netinet/in.h> 
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <string.h> 
-#include <sys/socket.h> 
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<sys/socket.h>
+#include<sys/types.h>
+#include<netinet/in.h>
 #include <unistd.h> 
-#define PORT 8080 
-int main() {  
-	int server_fd, new_socket, valread;   
-	struct sockaddr_in address;int opt = 1;int addrlen = sizeof(address);
-   	char buffer[1024] = { 0 };
-   	char* msg;
-   	printf("Type message for the client : ");
-   	scanf("%[^\n]s", msg);
-   	
-   	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-   		perror("Socket Failed"); exit(EXIT_FAILURE); 
-   	}
-   	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-   		perror("setsockopt");
-   		exit(EXIT_FAILURE);
-   	}
-   	
-   	address.sin_family = AF_INET;
-   	address.sin_addr.s_addr = INADDR_ANY;
-   	address.sin_port = htons(PORT);
-   
-   	if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {perror("bind failed");
- 		exit(EXIT_FAILURE);
- 	}
- 	
- 	if (listen(server_fd, 3) < 0) {
- 		perror("listen");exit(EXIT_FAILURE);
-   	}
-   	
-   	if ((new_socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen))< 0) {
-   		perror("accept");
-   		exit(EXIT_FAILURE);
-   	}
-   
-   	valread = read(new_socket, buffer, 1024);
-   	printf("%s\n", buffer);
-   	send(new_socket, msg, strlen(msg), 0);
-   	//printf("%d\n",new_socket);
-   	printf("Sending....\n");
-   	printf("Message sent successfully from server to client\n");
-   	close(new_socket);shutdown(server_fd, SHUT_RDWR);return 0;}
+
+int main() {
+
+	char server_message[256];
+	printf("Enter message to sent to client: ");
+	scanf("%s",server_message);
+
+	//create the server socket
+	int server_socket;
+	server_socket = socket(AF_INET,SOCK_STREAM,0);
+
+	// define the server address
+	struct sockaddr_in server_address;
+	server_address.sin_family = AF_INET;
+	server_address.sin_port = htons(8080);
+	server_address.sin_addr.s_addr = INADDR_ANY;
+
+	//bins the socket to specified IP and port
+	bind(server_socket, (struct sockaddr *) &server_address, sizeof(server_address));
+
+	//listen to the client sockets
+	listen(server_socket,5);
+
+	char buffer[256] = {0};
+	int client_socket;
+	client_socket = accept(server_socket,NULL,NULL);
+	//send the message to client
+	send(client_socket,server_message,sizeof(server_message),0);
+	
+	recv(client_socket,buffer,256,0);
+	printf("The client send the response: ");
+	printf("%s\n",buffer);
+	// close the socket
+	close(server_socket);
+	return 0;
+}
